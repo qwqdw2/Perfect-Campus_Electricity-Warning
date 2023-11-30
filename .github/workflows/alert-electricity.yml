@@ -1,0 +1,50 @@
+name: 完美校园电量告警
+
+on:
+  schedule:
+    - cron: "0 3,9 * * *"
+  workflow_dispatch:  # 添加 workflow_dispatch 触发器
+
+jobs:
+  alert:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16
+
+      - name: Install axios
+        run: npm install axios
+
+      - name: Run alert script
+        run: |
+          echo "var school_id=${{ secrets.school_id }};" >> config.js
+          echo "var student_id=${{ secrets.student_id }};" >> config.js
+          echo "var alert_threshold=${{ secrets.alert_threshold }};" >> config.js
+          echo "var alert_superthreshold=${{ secrets.alert_superthreshold }};" >> config.js
+          
+          if [ -n "${{ secrets.WX_message_key }}" ]; then
+            echo "var WX_message_key='${{ secrets.WX_message_key }}';" >> config.js
+          else
+            echo "var WX_message_key='';" >> config.js
+          fi
+          
+          if [ -n "${{ secrets.QQ_message_key }}" ]; then
+            echo "var QQ_message_key='${{ secrets.QQ_message_key }}';" >> config.js
+          else
+            echo "var QQ_message_key='';" >> config.js
+          fi
+          
+          if [ -n "${{ secrets.DD_webhook }}" ]; then
+            echo "var DD_webhook='${{ secrets.DD_webhook }}';" >> config.js
+          else
+            echo "var DD_webhook='';" >> config.js
+          fi
+          
+          cat alert.js >> config.js
+          node config.js
